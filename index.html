@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Dao of Zero</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Header Section -->
+        <header id="game-header">
+            <h1 id="game-title">道之零</h1>
+            <div id="realm-display">Qi Condensation</div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="game-main">
+            <!-- Left Panel: Resources -->
+            <section id="resources-panel" class="panel">
+                <h2>Resources</h2>
+                <div class="resource-group">
+                    <div class="resource-item">
+                        <span class="resource-label">Dao Marks:</span>
+                        <span id="dao-marks" class="resource-value">0</span>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-label">Qi:</span>
+                        <span id="qi-current" class="resource-value">0</span>
+                        <span class="resource-separator">/</span>
+                        <span id="qi-max" class="resource-value">100</span>
+                    </div>
+                    <div class="resource-item hidden" id="insight-container">
+                        <span class="resource-label">Insight:</span>
+                        <span id="insight" class="resource-value">0</span>
+                    </div>
+                    <div class="resource-item hidden" id="prestige-container">
+                        <span class="resource-label">Face:</span>
+                        <span id="prestige" class="resource-value">0</span>
+                    </div>
+                </div>
+
+                <!-- Production Stats -->
+                <div id="stats-group" class="hidden">
+                    <h3>Production</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Marks/sec:</span>
+                        <span id="marks-per-sec" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Qi/breath:</span>
+                        <span id="qi-per-click" class="stat-value">1</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Center Panel: Main Action -->
+            <section id="action-panel" class="panel">
+                <div id="cultivation-circle" class="enso">
+                    <svg viewBox="0 0 200 200" id="enso-svg">
+                        <circle cx="100" cy="100" r="80"
+                                stroke="currentColor"
+                                stroke-width="3"
+                                fill="none"
+                                stroke-dasharray="502"
+                                stroke-dashoffset="50"
+                                id="enso-circle"/>
+                    </svg>
+                </div>
+                <button id="cultivate-btn" class="main-action-btn">
+                    <span id="btn-text">吸</span>
+                    <span id="btn-subtext">Breathe</span>
+                </button>
+
+                <!-- System Log -->
+                <div id="log-container">
+                    <h3>System Log</h3>
+                    <div id="log-content"></div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Upgrades & Actions -->
+            <section id="upgrades-panel" class="panel">
+                <h2>Somatic Optimization</h2>
+                <div id="upgrades-list"></div>
+
+                <div id="actions-section" class="hidden">
+                    <h2>Actions</h2>
+                    <div id="actions-list"></div>
+                </div>
+
+                <div id="techniques-section" class="hidden">
+                    <h2>Techniques</h2>
+                    <div id="techniques-list"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer id="game-footer">
+            <button id="save-btn" class="footer-btn">Save Progress</button>
+            <button id="settings-btn" class="footer-btn">Settings</button>
+            <div id="autosave-indicator">Last saved: Never</div>
+        </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Settings</h2>
+            <div class="setting-item">
+                <label>
+                    <input type="checkbox" id="autosave-toggle" checked>
+                    Autosave (every 30s)
+                </label>
+            </div>
+            <div class="setting-item">
+                <label>
+                    <input type="checkbox" id="sound-toggle" checked>
+                    Sound Effects
+                </label>
+            </div>
+            <div class="setting-item">
+                <button id="export-save-btn">Export Save</button>
+                <button id="import-save-btn">Import Save</button>
+            </div>
+            <div class="setting-item">
+                <button id="reset-btn" class="danger-btn">Reset Progress</button>
+            </div>
+            <button id="close-settings-btn" class="footer-btn">Close</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
