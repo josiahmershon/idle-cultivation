@@ -14,6 +14,8 @@ const Game = {
     marksPerSecond: 0,
     insightPerSecond: 0,
     tributePerSecond: 0,
+    refineBonus: 0,
+    refineCostReduction: 0,
 
     // Multipliers
     globalMultiplier: 1,
@@ -47,6 +49,46 @@ const Game = {
 
 // ===== UPGRADE DEFINITIONS =====
 const UPGRADES = {
+    // Tier 0 - Very Early (Dao Mark upgrades)
+    focusedBreathing: {
+        id: 'focusedBreathing',
+        name: 'Focused Breathing',
+        description: 'Concentrate on each breath. Quality over quantity.',
+        effect: '+1 Qi per click',
+        baseCost: { daoMarks: 5 },
+        maxLevel: 5,
+        costMultiplier: 2,
+        apply: (game, level) => {
+            game.qiPerClick = 1 + level;
+        }
+    },
+
+    manualRefinement: {
+        id: 'manualRefinement',
+        name: 'Manual Refinement',
+        description: 'Learn to compress Qi into Dao Marks more efficiently.',
+        effect: 'Refine Qi action gives +1 extra Dao Mark',
+        baseCost: { daoMarks: 10 },
+        maxLevel: 3,
+        costMultiplier: 3,
+        apply: (game, level) => {
+            game.refineBonus = level;
+        }
+    },
+
+    mentalClarity: {
+        id: 'mentalClarity',
+        name: 'Mental Clarity',
+        description: 'A clear mind optimizes the breathing cycle.',
+        effect: 'Reduce Refine Qi cost by 1',
+        baseCost: { daoMarks: 15 },
+        maxLevel: 3,
+        costMultiplier: 2,
+        apply: (game, level) => {
+            game.refineCostReduction = level;
+        }
+    },
+
     // Tier 1 - Basic
     meridianDredging: {
         id: 'meridianDredging',
@@ -61,12 +103,25 @@ const UPGRADES = {
         }
     },
 
+    breathingRhythm: {
+        id: 'breathingRhythm',
+        name: 'Breathing Rhythm',
+        description: 'Establish a steady rhythm. The body remembers the pattern.',
+        effect: '+0.5 Qi/sec',
+        baseCost: { qi: 30, daoMarks: 10 },
+        maxLevel: 5,
+        costMultiplier: 1.8,
+        apply: (game, level) => {
+            game.qiPerSecond += level * 0.5;
+        }
+    },
+
     dantianExpansion: {
         id: 'dantianExpansion',
         name: 'Dantian Expansion',
         description: 'The Sea of Qi is a cup. Smash the cup. Make it a lake.',
         effect: '+50 Max Qi per level',
-        baseCost: { qi: 100 },
+        baseCost: { qi: 80 },
         maxLevel: 10,
         costMultiplier: 1.5,
         apply: (game, level) => {
@@ -74,17 +129,30 @@ const UPGRADES = {
         }
     },
 
+    qiCompression: {
+        id: 'qiCompression',
+        name: 'Qi Compression',
+        description: 'Compress Qi into denser forms. More output per breath.',
+        effect: '+2 Qi per click',
+        baseCost: { qi: 100, daoMarks: 25 },
+        maxLevel: 3,
+        costMultiplier: 2,
+        apply: (game, level) => {
+            game.qiPerClick += level * 2;
+        }
+    },
+
     autonomicCycling: {
         id: 'autonomicCycling',
         name: 'Autonomic Cycling',
         description: 'Conscious breathing is inefficient. Delegate the task to the spinal cord.',
-        effect: 'Unlocks automatic Qi generation',
-        baseCost: { qi: 500 },
+        effect: 'Unlocks automatic Qi generation: +2 Qi/sec',
+        baseCost: { qi: 200, daoMarks: 50 },
         maxLevel: 1,
         costMultiplier: 1,
         apply: (game, level) => {
             if (level >= 1) {
-                game.qiPerSecond = 1;
+                game.qiPerSecond += 2;
             }
         }
     },
@@ -175,16 +243,22 @@ const UPGRADES = {
 const ACTIONS = {
     refineQi: {
         id: 'refineQi',
-        name: 'Refine Qi into Dao Marks',
-        description: 'Convert raw Qi into crystallized Dao Marks.',
-        cost: { qi: 10 },
-        effect: '+1 Dao Mark',
+        name: 'Refine Qi → Dao Marks',
+        description: 'Manually compress and crystallize your Qi into permanent Dao Marks.',
+        getCost: (game) => {
+            return { qi: Math.max(1, 10 - game.refineCostReduction) };
+        },
+        getEffect: (game) => {
+            return `+${1 + game.refineBonus} Dao Mark${1 + game.refineBonus > 1 ? 's' : ''}`;
+        },
         cooldown: 0,
         execute: (game) => {
-            if (game.qi >= 10) {
-                game.qi -= 10;
-                game.daoMarks += 1;
-                game.totalMarksProduced += 1;
+            const cost = Math.max(1, 10 - game.refineCostReduction);
+            if (game.qi >= cost) {
+                game.qi -= cost;
+                const marksGained = 1 + game.refineBonus;
+                game.daoMarks += marksGained;
+                game.totalMarksProduced += marksGained;
                 return true;
             }
             return false;
@@ -344,12 +418,15 @@ function buyUpgrade(upgradeId) {
 
 function recalculateStats() {
     // Reset to base values
+    Game.qiPerClick = 1;
     Game.qiPerSecond = 0;
     Game.marksPerSecond = 0;
     Game.marksPerClick = 0;
     Game.globalMultiplier = 1;
     Game.qiMultiplier = 1;
     Game.markMultiplier = 1;
+    Game.refineBonus = 0;
+    Game.refineCostReduction = 0;
 
     // Apply all upgrades
     for (let [upgradeId, level] of Object.entries(Game.upgrades)) {
@@ -549,6 +626,9 @@ function renderActions() {
     const actionsList = document.getElementById('actions-list');
     actionsList.innerHTML = '';
 
+    // Always show actions section if there are any actions to show
+    let hasVisibleActions = false;
+
     for (let action of Object.values(ACTIONS)) {
         // Check requirements
         if (action.requires) {
@@ -562,15 +642,21 @@ function renderActions() {
             if (!visible) continue;
         }
 
+        hasVisibleActions = true;
+
         const item = document.createElement('div');
         item.className = 'action-item';
 
-        const canUse = canAfford(action.cost);
+        // Get dynamic cost and effect if functions exist
+        const cost = action.getCost ? action.getCost(Game) : action.cost;
+        const effect = action.getEffect ? action.getEffect(Game) : action.effect;
+
+        const canUse = canAfford(cost);
         if (!canUse) {
             item.classList.add('locked');
         }
 
-        const costText = Object.entries(action.cost)
+        const costText = Object.entries(cost)
             .map(([resource, amount]) => `${formatNumber(amount)} ${resource}`)
             .join(', ');
 
@@ -580,7 +666,7 @@ function renderActions() {
                 <span class="upgrade-cost">${costText}</span>
             </div>
             <div class="upgrade-description">${action.description}</div>
-            <div class="upgrade-effect">${action.effect}</div>
+            <div class="upgrade-effect">${effect}</div>
         `;
 
         if (canUse) {
@@ -593,6 +679,11 @@ function renderActions() {
         }
 
         actionsList.appendChild(item);
+    }
+
+    // Show/hide actions section
+    if (hasVisibleActions) {
+        document.getElementById('actions-section').classList.remove('hidden');
     }
 }
 
